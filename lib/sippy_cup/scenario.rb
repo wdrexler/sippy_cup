@@ -432,6 +432,7 @@ Content-Length: 0
       scenario_file.rewind
 
       media_file = Tempfile.new 'media'
+      media_file.binmode
       media_file.write compile_media.to_s
       media_file.rewind
 
