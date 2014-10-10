@@ -99,10 +99,13 @@ module SippyCup
         p: @scenario_options[:source_port] || '8836',
         sf: @input_files[:scenario].path,
         l: @scenario_options[:concurrent_max] || @scenario_options[:max_concurrent] || 5,
-        m: @scenario_options[:number_of_calls] || 10,
         r: @scenario_options[:calls_per_second] || 10,
         s: @scenario_options[:to_user] || '1'
       }
+
+      if !@scenario_options[:use_time]
+        options[:m] = @scenario_options[:number_of_calls] || 10
+      end
 
       options[:i] = @scenario_options[:source] if @scenario_options[:source]
       options[:mp] = @scenario_options[:media_port] if @scenario_options[:media_port]
@@ -156,6 +159,13 @@ module SippyCup
           buffer = @rd.readpartial(1024).strip
           @stderr_buffer += buffer
           $stderr << buffer if @options[:full_sipp_output]
+        end
+      end
+
+      if @scenario_options[:use_time] && @scenario_options[:time_limit]
+        Thread.new do
+          sleep @scenario_options[:time_limit].to_i
+          Process.kill "SIGUSR1", @sipp_pid if @sipp_pid
         end
       end
     end
