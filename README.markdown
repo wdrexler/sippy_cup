@@ -179,6 +179,7 @@ This will create the files `somewhere.xml` and `somewhere.pcap` in the `/path/to
 ### Customizing the Test Run
 
 Each parameter has an impact on the test, and may either be changed once the XML file is generated or specified in the options hash for `SippyCup::Scenario.new`. In addition to the default parameters, some additional parameters can be set:
+
 <dl>
   <dt>stats_file</dt>
   <dd>Path to a file where call statistics will be stored in a CSV format, defaults to not storing stats</dd>
@@ -198,6 +199,12 @@ Each parameter has an impact on the test, and may either be changed once the XML
   <dt>full_sipp_output</dt>
   <dd>By default, SippyCup will show SIPp's command line output while running a scenario. Set this parameter to `false` to hide full command line output</dd>
 
+  <dt>summary_report_file</dt>
+  <dd>Write a summary of the SIPp run to the specified file. This summary is the output from the SIPp `-trace_screen` command. Requires a development build of SIPp; see https://github.com/SIPp/sipp/pull/106.</dd>
+
+  <dt>errors_report_file</dt>
+  <dd>Record SIPp's errors to the specified file. This report is the output from the SIPp `-trace_err` command.</dd>
+
   <dt>options</dt>
   <dd>A string of SIPp command line options included with the SIPp run.</dd>
 
@@ -205,10 +212,22 @@ Each parameter has an impact on the test, and may either be changed once the XML
   <dd>By default, SIPp assigns RTP ports dynamically. However, if there is a need for a static RTP port (say, for data collection purposes), it can be done by supplying a port number here.</dd>
 
   <dt>dtmf_mode</dt>
-  <dd>Specify the mechanism by which DTMF is signaled. Valid options are `rfc2833` for within the RTP media, or `info` for SIP INFO.</dd>
+  <dd>Specify the mechanism by which DTMF is signaled. Valid options are `rfc2833` for within the RTP media, or `info` for SIP INFO. Default: rfc2833</dd>
 
   <dt>scenario_variables</dt>
   <dd>If you're using sippy_cup to run a SIPp XML file, there may be CSV fields in the scenario ([field0], [field1], etc.). Specify a path to a CSV file containing the required information using this option. (File is semicolon delimeted, information can be found [here](http://sipp.sourceforge.net/doc/reference.html#inffile).)</dd>
+
+  <dt>concurrent_max</dt>
+  <dd>The maximum number of calls permitted to be active at any given time. When this limit is reached, SIPp will slow down or stop sending new calls until there it falls below the limit. Default: 5</dd>
+
+  <dt>calls_per_second</dt>
+  <dd>The rate at which new calls should be created. Note that SIPp will automatically adjust this downward to stay at or beneath the maximum number of concurrent calls (`concurrent_max`). Default: 10</dt>
+
+  <dt>calls_per_second_incr</dt>
+  <dd>When used with `calls_per_second_max`, tells SIPp the amount by which calls-per-second should be incremented. CPS rate is adjusted each `stats_interval`. Default: 1.</dd>
+
+  <dt>calls_per_second_max</dt>
+  <dd>The maximum rate of calls-per-second. If unset, the CPS rate will remain at the level set by `calls_per_second`.</dd>
 </dl>
 
 ### Additional SIPp Scenario Attributes

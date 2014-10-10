@@ -1,5 +1,6 @@
 # encoding: utf-8
 require 'logger'
+require 'fileutils'
 
 #
 # Service object to oversee the execution of a Scenario
@@ -95,21 +96,40 @@ module SippyCup
 
     def command_options
       options = {
-        i: @scenario_options[:source],
         p: @scenario_options[:source_port] || '8836',
         sf: @input_files[:scenario].path,
-        l: @scenario_options[:max_concurrent] || 5,
-        m: @scenario_options[:number_of_calls] || 10,
+        l: @scenario_options[:concurrent_max] || @scenario_options[:max_concurrent] || 5,
         r: @scenario_options[:calls_per_second] || 10,
         s: @scenario_options[:to_user] || '1'
       }
 
+      if !@scenario_options[:use_time]
+        options[:m] = @scenario_options[:number_of_calls] || 10
+      end
+
+      options[:i] = @scenario_options[:source] if @scenario_options[:source]
       options[:mp] = @scenario_options[:media_port] if @scenario_options[:media_port]
+
+      if @scenario_options[:calls_per_second_max]
+        options[:no_rate_quit] = nil
+        options[:rate_max] = @scenario_options[:calls_per_second_max]
+        options[:rate_increase] = @scenario_options[:calls_per_second_incr] || 1
+      end
 
       if @scenario_options[:stats_file]
         options[:trace_stat] = nil
         options[:stf] = @scenario_options[:stats_file]
         options[:fd] = @scenario_options[:stats_interval] || 1
+      end
+
+      if @scenario_options[:summary_report_file]
+        options[:trace_screen] = nil
+        options[:screen_file] = @scenario_options[:summary_report_file]
+      end
+
+      if @scenario_options[:errors_report_file]
+        options[:trace_err] = nil
+        options[:error_file] = @scenario_options[:errors_report_file]
       end
 
       if @scenario_options[:transport_mode]
@@ -141,6 +161,13 @@ module SippyCup
           $stderr << buffer if @options[:full_sipp_output]
         end
       end
+
+      if @scenario_options[:use_time] && @scenario_options[:time_limit]
+        Thread.new do
+          sleep @scenario_options[:time_limit].to_i
+          Process.kill "SIGUSR1", @sipp_pid if @sipp_pid
+        end
+      end
     end
 
     def process_exit_status(process_status, error_message = nil)
@@ -167,7 +194,7 @@ module SippyCup
       @input_files.values.compact.each do |value|
         value.close
         value.unlink
-      end
+      end if @input_files
     end
   end
 
