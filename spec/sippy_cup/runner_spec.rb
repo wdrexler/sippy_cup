@@ -555,6 +555,51 @@ steps:
     end
   end
 
+  describe '#set_cps' do
+    let(:receiving_socket) { UDPSocket.new }
+    before(:each) { receiving_socket.bind '127.0.0.1', 8888 }
+    after(:each) { receiving_socket.close }
+    it 'should not send anything if input is invalid' do
+      subject.set_cps 'I am invalid!'
+      expect { receiving_socket.read_nonblock 1 }.to raise_error IO::EAGAINWaitReadable #There's nothing on the socket
+    end
+
+    it 'should send the correct command if input is an integer' do
+      subject.set_cps 123
+      receiving_socket.read(13).should == 'cset rate 123'
+    end
+
+    it 'should send the correct command if input is a string' do
+      subject.set_cps '145'
+      receiving_socket.read(13).should == 'cset rate 145'
+    end
+  end
+
+  describe '#change_cps' do
+    let(:receiving_socket) { UDPSocket.new }
+    before(:each) { receiving_socket.bind '127.0.0.1', 8888 }
+    after(:each) { receiving_socket.close }
+    it 'should not send anything if the change evaluates to zero' do
+      subject.change_cps 'I am zero!'
+      expect { receiving_socket.read_nonblock 1 }.to raise_error IO::EAGAINWaitReadable #There's nothing on the socket
+    end
+
+    it 'should send the proper value when the input is positive' do
+      subject.change_cps 23
+      receiving_socket.read(5).should == '**+++'
+    end
+
+    it 'should send the proper value when the input is negative' do
+      subject.change_cps -41
+      receiving_socket.read(5).should == '////-'
+    end
+
+    it 'should send the proper value, even if input is an integer string' do
+      subject.change_cps '-32'
+      receiving_socket.read(5).should == '///--'
+    end
+  end
+
   describe '#wait' do
     before { subject.sipp_pid = pid }
     it "waits for the SIPp process" do
