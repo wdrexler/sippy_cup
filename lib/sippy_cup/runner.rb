@@ -186,7 +186,7 @@ module SippyCup
       when 254
         raise SippyCup::FatalSocketBindingError, error_message
       else
-        raise SippyCup::SippGenericError, "Exit Code: #{exit_code}: #{error_message}"
+        raise SippyCup::SippGenericError, error_message
       end
     end
 
