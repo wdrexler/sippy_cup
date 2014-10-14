@@ -25,6 +25,9 @@ module SippyCup
       defaults = { full_sipp_output: true }
       @options = defaults.merge(opts)
 
+      @control_port = @scenario_options[:control_port] || 8888
+      @control_socket = UDPSocket.new
+
       @command = @options[:command]
       @logger = @options[:logger] || Logger.new(STDOUT)
     end
@@ -82,6 +85,22 @@ module SippyCup
       cleanup_input_files
     end
 
+    def set_cps(cps)
+      return unless cps.to_i > 0
+      @control_socket.send "cset rate #{cps}", 0, '127.0.0.1', @control_port
+    end
+
+    def change_cps(cps_delta)
+      cps_delta = cps_delta.to_i
+      if cps_delta > 0
+        (cps_delta / 10).times { @control_socket.send '*', 0, '127.0.0.1', @control_port }
+        (cps_delta % 10).times { @control_socket.send '+', 0, '127.0.0.1', @control_port }
+      elsif cps_delta < 0
+        (-cps_delta / 10).times { @control_socket.send '/', 0, '127.0.0.1', @control_port }
+        (-cps_delta % 10).times { @control_socket.send '-', 0, '127.0.0.1', @control_port }
+      end
+    end
+
   private
 
     def command
@@ -109,6 +128,10 @@ module SippyCup
 
       options[:i] = @scenario_options[:source] if @scenario_options[:source]
       options[:mp] = @scenario_options[:media_port] if @scenario_options[:media_port]
+
+      if @scenario_options[:control_port]
+        options[:cp] = @scenario_options[:control_port]
+      end
 
       if @scenario_options[:calls_per_second_max]
         options[:no_rate_quit] = nil
