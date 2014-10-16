@@ -117,12 +117,15 @@ module SippyCup
       options = {
         p: @scenario_options[:source_port] || '8836',
         sf: @input_files[:scenario].path,
-        l: @scenario_options[:concurrent_max] || @scenario_options[:max_concurrent] || 5,
-        r: @scenario_options[:calls_per_second] || 10,
         s: @scenario_options[:to_user] || '1'
       }
 
-      if !@scenario_options[:use_time]
+      unless @scenario_options[:receiver_mode]
+        options[:l] = @scenario_options[:concurrent_max] || @scenario_options[:max_concurrent] || 5
+        options[:r] = @scenario_options[:calls_per_second] || 10
+      end
+
+      unless @scenario_options[:use_time] || @scenario_options[:receiver_mode]
         options[:m] = @scenario_options[:number_of_calls] || 10
       end
 

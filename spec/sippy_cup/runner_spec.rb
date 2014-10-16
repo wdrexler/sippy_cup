@@ -48,7 +48,7 @@ steps:
   describe '#run' do
     it "executes the correct command to invoke SIPp" do
       full_scenario_path = File.join(Dir.tmpdir, '/scenario.*')
-      expect_command_execution %r{sudo \$\(which sipp\) -p 8836 -sf #{full_scenario_path} -l 5 -m 10 -r 2 -s 1 -i dah.com bar.com}
+      expect_command_execution %r{sudo \$\(which sipp\) -p 8836 -sf #{full_scenario_path} -s 1 -l 5 -r 2 -m 10 -i dah.com bar.com}
       subject.run
     end
 
@@ -137,6 +137,32 @@ steps:
 
       it 'should set the -p option' do
         expect_command_execution(/-p 1234/)
+        subject.run
+      end
+    end
+
+    context "receiver_mode" do
+      let(:manifest) do
+        <<-MANIFEST
+name: foobar
+source: 'dah.com'
+destination: 'bar.com'
+receiver_mode: true
+steps:
+  - invite
+  - wait_for_answer
+  - ack_answer
+  - sleep 3
+  - send_digits 'abc'
+  - sleep 5
+  - send_digits '#'
+  - wait_for_hangup
+        MANIFEST
+      end
+
+      it 'should not set -l, -r, or -m' do
+        full_scenario_path = File.join(Dir.tmpdir, '/scenario.*')
+        expect_command_execution %r{sudo \$\(which sipp\) -p 8836 -sf #{full_scenario_path} -s 1 -i dah.com bar.com$}
         subject.run
       end
     end
